@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { Author } = require('../models/Author.js');
-const Joi = require('joi');
+const {
+  Author,
+  validateCreateAuthor,
+  validateUpdateAuthor,
+} = require('../models/Author.js');
 
 /**
  * @desc Get all authors
@@ -9,8 +12,14 @@ const Joi = require('joi');
  * @method GET
  * @access Public
  */
-router.get('/', (req, res) => {
-  res.status(200).json(authors);
+router.get('/', async (req, res) => {
+  try {
+    const authorList = await Author.find();
+    res.status(200).json(authorList);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
 });
 
 /**
@@ -19,13 +28,18 @@ router.get('/', (req, res) => {
  * @method GET
  * @access Public
  */
-router.get('/:id', (req, res) => {
-  const author = authors.find((aut) => aut.id === parseInt(req.params.id));
+router.get('/:id', async (req, res) => {
+  try {
+    const author = await Author.findById(req.params.id);
 
-  if (author) {
-    res.status(200).json(author);
-  } else {
-    res.status(404).json({ message: 'Author not found' });
+    if (author) {
+      res.status(200).json(author);
+    } else {
+      res.status(404).json({ message: 'Author not found' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Something went wrong' });
   }
 });
 
@@ -62,18 +76,32 @@ router.post('/', async (req, res) => {
  * @method PUT
  * @access Public
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const { error } = validateUpdateAuthor(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
-  const author = authors.find((aut) => aut.id === parseInt(req.params.id));
-  if (author) {
-    res
-      .status(200)
-      .json({ message: 'Author information has been updated successfully!' });
-  } else {
-    res.status(404).json({ message: 'Author is not found!' });
+  try {
+    const author = await Author.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          nationality: req.body.nationality,
+          image: req.body.image,
+        },
+      },
+      { new: true }
+    );
+    if (author) {
+      res.status(200).json(author);
+    } else {
+      res.status(404).json({ message: 'Author not found' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Something went wrong' });
   }
 });
 
@@ -83,39 +111,21 @@ router.put('/:id', (req, res) => {
  * @method DELETE
  * @access Public
  */
-router.delete('/:id', (req, res) => {
-  const author = authors.find((aut) => aut.id === parseInt(req.params.id));
-  if (author) {
-    res
-      .status(200)
-      .json({ message: 'Author information has been deleted successfully!' });
-  } else {
-    res.status(404).json({ message: 'Author is not found!' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const author = await Author.findById(req.params.id);
+    if (author) {
+      await Author.findByIdAndDelete(req.params.id);
+      res
+        .status(200)
+        .json({ message: 'Author information has been deleted successfully!' });
+    } else {
+      res.status(404).json({ message: 'Author is not found!' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Something went wrong' });
   }
 });
-
-// validation during creation of new author
-function validateCreateAuthor(obj) {
-  const schema = Joi.object({
-    firstName: Joi.string().trim().min(3).max(200).required(),
-    lastName: Joi.string().trim().min(3).max(200).required(),
-    nationality: Joi.string().trim().min(3).max(500).required(),
-    image: Joi.string(),
-  });
-
-  return schema.validate(obj);
-}
-
-// validation during updating of new author
-function validateUpdateAuthor(obj) {
-  const schema = Joi.object({
-    firstName: Joi.string().trim().min(3).max(200),
-    lastName: Joi.string().trim().min(3).max(200),
-    nationality: Joi.string().trim().min(3).max(500),
-    image: Joi.string().trim(),
-  });
-
-  return schema.validate(obj);
-}
 
 module.exports = router;
