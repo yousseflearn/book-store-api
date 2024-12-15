@@ -1,5 +1,6 @@
 const express = require('express');
 const booksPath = require('./routes/books,js');
+const authorsPath = require('./routes/authors');
 
 // init app
 const app = express();
@@ -10,8 +11,8 @@ By using the express.json middleware, you can handle POST, PUT, or PATCH request
 app.use(express.json());
 
 //routes
-app.use('/', booksPath);
 app.use('/api/books', booksPath);
+app.use('/api/authors', authorsPath);
 
 // Running The Server
 const PORT = 5000;

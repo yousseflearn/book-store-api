@@ -25,16 +25,6 @@ const books = [
 ];
 
 /**
- * @desc Get home page
- * @route /
- * @method GET
- * @access public
- */
-router.get('/', (req, res) => {
-  res.send('hi,Welcome To Express');
-});
-
-/**
  * @desc Get all books
  * @route /api/books
  * @method GET
