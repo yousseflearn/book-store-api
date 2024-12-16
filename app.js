@@ -1,5 +1,5 @@
 const express = require('express');
-const booksPath = require('./routes/books,js');
+const booksPath = require('./routes/books.js');
 const authorsPath = require('./routes/authors');
 const mongoose = require('mongoose');
 
