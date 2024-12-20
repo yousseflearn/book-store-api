@@ -7,6 +7,7 @@ const {
   validateRegisterUser,
   validateLoginUser,
 } = require('../models/User');
+const jwt = require('jsonwebtoken');
 
 /**
  * @desc Register New User
@@ -40,13 +41,63 @@ router.post(
     });
 
     const result = await user.save();
-    const token = null;
+    const token = jwt.sign(
+      { id: user._id, userName: user.userName },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRATION_TIME }
+    );
 
     // separate password  from data
     const { password, ...other } = result._doc;
 
     // sending data without password to user for security
     res.status(201).json({ ...other, token });
+  })
+);
+
+/**
+ * @desc Login User
+ * @route /api/auth/login
+ * @method POST
+ * @access public
+ */
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
+    const { error } = validateLoginUser(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
+    let user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: 'Invalid Email or Wrong Password!' });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
+
+    if (!isPasswordMatch) {
+      return res
+        .status(400)
+        .json({ message: 'Invalid Email or Wrong Password!' });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, userName: user.userName },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRATION_TIME }
+    );
+
+    // separate password  from data
+    const { password, ...other } = user._doc;
+
+    // sending data without password to user for security
+    res.status(200).json({ ...other, token });
   })
 );
 
