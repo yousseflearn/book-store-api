@@ -37,12 +37,11 @@ router.post(
       email: req.body.email,
       userName: req.body.userName,
       password: hashedPassword,
-      isAdmin: req.body.isAdmin,
     });
 
     const result = await user.save();
     const token = jwt.sign(
-      { id: user._id, userName: user.userName },
+      { id: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRATION_TIME }
     );
@@ -88,7 +87,7 @@ router.post(
     }
 
     const token = jwt.sign(
-      { id: user._id, userName: user.userName },
+      { id: user._id, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRATION_TIME }
     );

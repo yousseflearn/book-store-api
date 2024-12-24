@@ -3,25 +3,21 @@ const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcryptjs');
 const { validateUpdateUser, User } = require('../models/User');
-const { verifyToken } = require('../middlewares/verifyToken');
+const {
+  verifyTokenAndAdmin,
+  verifyTokenAndAuthorization,
+} = require('../middlewares/verifyToken');
 
 /**
  * @desc Update User
  * @route /api/users/:id
  * @method PUT
- * @access public
+ * @access private
  */
 router.put(
   '/:id',
-  verifyToken,
+  verifyTokenAndAuthorization,
   asyncHandler(async (req, res) => {
-    if (req.user.id !== req.params.id) {
-      return res
-        .status(403) // 403 = forbidden
-        .json({
-          message: 'You are not allowed, you can only update your profile!',
-        });
-    }
     const { error } = validateUpdateUser(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
@@ -45,6 +41,22 @@ router.put(
     ).select('-password');
 
     res.status(200).json(updateUser);
+  })
+);
+
+/**
+ * @desc Get All Users
+ * @route /api/users/
+ * @method GET
+ * @access private (only Admins)
+ */
+router.get(
+  '/',
+  verifyTokenAndAdmin,
+  asyncHandler(async (req, res) => {
+    const users = await User.find().select('-password');
+
+    res.status(200).json(users);
   })
 );
 
