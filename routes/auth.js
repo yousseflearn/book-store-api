@@ -7,7 +7,6 @@ const {
   validateRegisterUser,
   validateLoginUser,
 } = require('../models/User');
-const jwt = require('jsonwebtoken');
 
 /**
  * @desc Register New User
@@ -40,11 +39,7 @@ router.post(
     });
 
     const result = await user.save();
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRATION_TIME }
-    );
+    const token = user.generateToken();
 
     // separate password  from data
     const { password, ...other } = result._doc;
@@ -86,11 +81,7 @@ router.post(
         .json({ message: 'Invalid Email or Wrong Password!' });
     }
 
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRATION_TIME }
-    );
+    const token = user.generateToken();
 
     // separate password  from data
     const { password, ...other } = user._doc;
