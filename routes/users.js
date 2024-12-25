@@ -60,4 +60,43 @@ router.get(
   })
 );
 
+/**
+ * @desc Get User by Id
+ * @route /api/users/:id
+ * @method GET
+ * @access private (only Admins and user himself)
+ */
+router.get(
+  '/:id',
+  verifyTokenAndAuthorization,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id).select('-password');
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(400).json({ message: 'User not found!' });
+    }
+  })
+);
+
+/**
+ * @desc Delete User by Id
+ * @route /api/users/:id
+ * @method DELETE
+ * @access private (only Admins and user himself)
+ */
+router.delete(
+  '/:id',
+  verifyTokenAndAuthorization,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id).select('-password');
+    if (user) {
+      await User.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: 'User has been deleted successfully!' });
+    } else {
+      res.status(400).json({ message: 'User not found!' });
+    }
+  })
+);
+
 module.exports = router;
